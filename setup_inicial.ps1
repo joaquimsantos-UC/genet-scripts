@@ -20,14 +20,14 @@ Write-Host ""
 
 # ── 1. Renomear PC ───────────────────────────────────────────
 Write-Host "[1/9] A renomear PC para $NomePc..." -ForegroundColor Yellow
-Rename-Computer -NewName $NomePc -Force
+Rename-Computer -NewName $NomePc -Force -ErrorAction SilentlyContinue
 
 # ── 2. Configuracoes de sistema ──────────────────────────────
 Write-Host "[2/9] A aplicar configuracoes de sistema..." -ForegroundColor Yellow
 Set-TimeZone -Id "GMT Standard Time"
 try { Set-WinUILanguageOverride -Language pt-PT } catch {}
-Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
-net user guest /active:no | Out-Null
+try { Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private } catch {}
+net user guest /active:no 2>$null | Out-Null
 $AUSettings = (New-Object -com "Microsoft.Update.AutoUpdate").Settings
 $AUSettings.NotificationLevel = 4
 $AUSettings.Save()
@@ -40,28 +40,40 @@ $apps = @(
     "VideoLAN.VLC",
     "7zip.7zip",
     "Adobe.Acrobat.Reader.64-bit",
-    "AnyDesk.AnyDesk",
-    "IRISTeam.CartaodeCidadao"
+    "AnyDesk.AnyDesk"
 )
 foreach ($app in $apps) {
     Write-Host "  -> A instalar $app..." -ForegroundColor Gray
-    winget install $app --silent --accept-package-agreements --accept-source-agreements 2>$null
+    winget install $app --source winget --silent --accept-package-agreements --accept-source-agreements 2>$null
+}
+
+# Cartao de Cidadao - instalacao separada
+Write-Host "  -> A instalar Cartao de Cidadao..." -ForegroundColor Gray
+winget install "Cartao de Cidadao" --source winget --silent --accept-package-agreements --accept-source-agreements 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  AVISO: Cartao de Cidadao nao encontrado no winget." -ForegroundColor Yellow
+    Write-Host "  Instalar manualmente em: autenticacao.gov.pt" -ForegroundColor Yellow
 }
 
 # ── 4. Atualizacoes ───────────────────────────────────────────
 Write-Host "[4/9] A atualizar Windows e software..." -ForegroundColor Yellow
-winget upgrade --all --silent --accept-package-agreements 2>$null
+winget upgrade --all --source winget --silent --accept-package-agreements 2>$null
 
 # ── 5. Ativar BitLocker ───────────────────────────────────────
-Write-Host "[5/9] A ativar BitLocker..." -ForegroundColor Yellow
-$tpm = Get-Tpm
-if ($tpm.TpmPresent -and $tpm.TpmReady) {
-    Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -TpmProtector -UsedSpaceOnly
-    Add-BitLockerKeyProtector -MountPoint "C:" -RecoveryPasswordProtector
+Write-Host "[5/9] A verificar BitLocker..." -ForegroundColor Yellow
+$bl = Get-BitLockerVolume -MountPoint "C:"
+if ($bl.VolumeStatus -eq "FullyEncrypted" -or $bl.VolumeStatus -eq "EncryptionInProgress") {
+    Write-Host "  BitLocker ja esta ativo." -ForegroundColor Green
 } else {
-    Write-Host "  AVISO: TPM nao disponivel - BitLocker ativado com password" -ForegroundColor Red
-    $secPass = Read-Host "  Define password BitLocker" -AsSecureString
-    Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -PasswordProtector -Password $secPass
+    $tpm = Get-Tpm
+    if ($tpm.TpmPresent -and $tpm.TpmReady) {
+        Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -TpmProtector -UsedSpaceOnly
+        Add-BitLockerKeyProtector -MountPoint "C:" -RecoveryPasswordProtector
+    } else {
+        Write-Host "  AVISO: TPM nao disponivel - BitLocker ativado com password" -ForegroundColor Red
+        $secPass = Read-Host "  Define password BitLocker" -AsSecureString
+        Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -PasswordProtector -Password $secPass
+    }
 }
 
 # ── 6. Exportar chave BitLocker ───────────────────────────────
@@ -118,8 +130,8 @@ $linha | Out-File "C:\GeneT\registo.csv" -Append -Encoding UTF8
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
 Write-Host " CONCLUIDO!" -ForegroundColor Green
-Write-Host " PC:       $NomePc" -ForegroundColor Green
-Write-Host " N Serie:  $NumSerie" -ForegroundColor Green
+Write-Host " PC:      $NomePc" -ForegroundColor Green
+Write-Host " N Serie: $NumSerie" -ForegroundColor Green
 Write-Host " Chave BitLocker:" -ForegroundColor Green
 Write-Host " $chave" -ForegroundColor Yellow
 Write-Host " GUARDA ESTA CHAVE NO EXCEL ANTES DE CONTINUAR!" -ForegroundColor Red
