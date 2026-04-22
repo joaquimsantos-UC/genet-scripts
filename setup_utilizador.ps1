@@ -64,7 +64,7 @@ $anydeskId = ""
 try {
     $anydeskId = & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --get-id 2>$null
     if (-not $anydeskId) {
-        $anydeskId = Get-Content "$env:APPDATA\AnyDesk\system.conf" -ErrorAction SilentlyContinue |
+        $anydeskId = Get-Content "$env:PROGRAMDATA\AnyDesk\system.conf" -ErrorAction SilentlyContinue |
             Select-String "ad.anynet.id" |
             ForEach-Object { ($_ -split "=")[1].Trim() }
     }
