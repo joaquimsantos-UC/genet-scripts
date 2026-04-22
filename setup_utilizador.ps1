@@ -7,10 +7,8 @@ param(
     [string]$NomeUtilizador = ""
 )
 
-# Deteta automaticamente o nome do PC
 $NomePc = $env:COMPUTERNAME
 
-# Validar parametro
 if (-not $NomeUtilizador) {
     Write-Host "ERRO: Nome de utilizador nao fornecido." -ForegroundColor Red
     Write-Host "Uso: .\setup_utilizador.ps1 -NomeUtilizador 'joao.silva'" -ForegroundColor Yellow
@@ -27,17 +25,37 @@ Write-Host ""
 # ── 1. Criar conta standard ───────────────────────────────────
 Write-Host "[1/3] A criar conta '$NomeUtilizador'..." -ForegroundColor Yellow
 $passwordTemp = ConvertTo-SecureString "GeneT@2025!" -AsPlainText -Force
-New-LocalUser $NomeUtilizador `
+
+New-LocalUser -Name $NomeUtilizador `
     -Password $passwordTemp `
     -FullName $NomeUtilizador `
-    -Description "Utilizador GeneT" `
-    -PasswordNeverExpires $false
-Add-LocalGroupMember -Group "Users" -Member $NomeUtilizador
+    -Description "Utilizador GeneT"
+
+# Adicionar ao grupo de utilizadores standard
+# Tenta "Utilizadores" (PT) e "Users" (EN) para compatibilidade
+$grupos = @("Utilizadores", "Users")
+$adicionado = $false
+foreach ($grupo in $grupos) {
+    try {
+        Add-LocalGroupMember -Group $grupo -Member $NomeUtilizador -ErrorAction Stop
+        Write-Host "  Adicionado ao grupo '$grupo'" -ForegroundColor Gray
+        $adicionado = $true
+        break
+    } catch {}
+}
+if (-not $adicionado) {
+    Write-Host "  AVISO: Nao foi possivel adicionar ao grupo de utilizadores" -ForegroundColor Yellow
+}
 
 # Forcar mudanca de password no primeiro login
-$user = [ADSI]"WinNT://./$NomeUtilizador"
-$user.PasswordExpired = 1
-$user.SetInfo()
+try {
+    $userObj = [ADSI]"WinNT://$env:COMPUTERNAME/$NomeUtilizador,user"
+    $userObj.PasswordExpired = 1
+    $userObj.SetInfo()
+    Write-Host "  Password expirada -- utilizador tera de alterar no primeiro login" -ForegroundColor Gray
+} catch {
+    Write-Host "  AVISO: Nao foi possivel forcar mudanca de password" -ForegroundColor Yellow
+}
 
 # ── 2. Obter ID AnyDesk ───────────────────────────────────────
 Write-Host "[2/3] A obter ID AnyDesk..." -ForegroundColor Yellow
