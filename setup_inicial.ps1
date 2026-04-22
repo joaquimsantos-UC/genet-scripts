@@ -4,9 +4,16 @@
 # Uso: .\setup_inicial.ps1 -Numero 1
 # ============================================================
 param(
-    [Parameter(Mandatory=$true)]
-    [int]$Numero
+    [int]$Numero = 0
 )
+
+
+# Validar parametro
+if ($Numero -le 0) {
+    Write-Host "ERRO: Numero do PC nao fornecido." -ForegroundColor Red
+    Write-Host "Uso: .\setup_inicial.ps1 -Numero 1" -ForegroundColor Yellow
+    exit 1
+}
 
 $NomePc = "GeneT-LT-{0:D3}" -f $Numero
 $UpdateURL = "https://raw.githubusercontent.com/joaquimsantos-UC/genet-scripts/refs/heads/main/update.ps1"
