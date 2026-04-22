@@ -1,6 +1,6 @@
 # ============================================================
 # setup_inicial.ps1
-# Fase 1 — Configuração inicial (sem utilizador definido)
+# Fase 1 - Configuracao inicial (sem utilizador definido)
 # Uso: .\setup_inicial.ps1 -Numero 1
 # ============================================================
 param(
@@ -11,19 +11,21 @@ param(
 $NomePc = "GeneT-LT-{0:D3}" -f $Numero
 $UpdateURL = "https://raw.githubusercontent.com/joaquimsantos-UC/genet-scripts/refs/heads/main/update.ps1"
 
-Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host " GeneT Setup — Fase 1: Configuração inicial" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host " GeneT Setup - Fase 1: Configuracao inicial" -ForegroundColor Cyan
 Write-Host " PC: $NomePc" -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
 # ── 1. Renomear PC ───────────────────────────────────────────
 Write-Host "[1/9] A renomear PC para $NomePc..." -ForegroundColor Yellow
 Rename-Computer -NewName $NomePc -Force
 
-# ── 2. Configurações de sistema ──────────────────────────────
-Write-Host "[2/9] A aplicar configurações de sistema..." -ForegroundColor Yellow
+# ── 2. Configuracoes de sistema ──────────────────────────────
+Write-Host "[2/9] A aplicar configuracoes de sistema..." -ForegroundColor Yellow
 Set-TimeZone -Id "GMT Standard Time"
-Set-WinUILanguageOverride -Language pt-PT
+try { Set-WinUILanguageOverride -Language pt-PT } catch {}
 Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
 net user guest /active:no | Out-Null
 $AUSettings = (New-Object -com "Microsoft.Update.AutoUpdate").Settings
@@ -42,11 +44,11 @@ $apps = @(
     "IRISTeam.CartaodeCidadao"
 )
 foreach ($app in $apps) {
-    Write-Host "  → A instalar $app..." -ForegroundColor Gray
+    Write-Host "  -> A instalar $app..." -ForegroundColor Gray
     winget install $app --silent --accept-package-agreements --accept-source-agreements 2>$null
 }
 
-# ── 4. Atualizações ───────────────────────────────────────────
+# ── 4. Atualizacoes ───────────────────────────────────────────
 Write-Host "[4/9] A atualizar Windows e software..." -ForegroundColor Yellow
 winget upgrade --all --silent --accept-package-agreements 2>$null
 
@@ -57,7 +59,7 @@ if ($tpm.TpmPresent -and $tpm.TpmReady) {
     Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -TpmProtector -UsedSpaceOnly
     Add-BitLockerKeyProtector -MountPoint "C:" -RecoveryPasswordProtector
 } else {
-    Write-Host "  ⚠️  TPM não disponível — BitLocker ativado com password" -ForegroundColor Red
+    Write-Host "  AVISO: TPM nao disponivel - BitLocker ativado com password" -ForegroundColor Red
     $secPass = Read-Host "  Define password BitLocker" -AsSecureString
     Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -PasswordProtector -Password $secPass
 }
@@ -69,28 +71,30 @@ $chave = (Get-BitLockerVolume -MountPoint "C:").KeyProtector |
     Where-Object { $_.KeyProtectorType -eq "RecoveryPassword" } |
     Select-Object -ExpandProperty RecoveryPassword
 
-if (-not $chave) { $chave = "PENDENTE — verificar manualmente" }
+if (-not $chave) { $chave = "PENDENTE - verificar manualmente" }
 
-# ── 7. Gravar URL de atualização remota ──────────────────────
-Write-Host "[7/9] A configurar atualização remota..." -ForegroundColor Yellow
+# ── 7. Gravar URL de atualizacao remota ──────────────────────
+Write-Host "[7/9] A configurar atualizacao remota..." -ForegroundColor Yellow
 [System.Environment]::SetEnvironmentVariable("GENET_UPDATE_URL", $UpdateURL, "Machine")
-
-# Criar pasta de trabalho GeneT
 New-Item -ItemType Directory -Path "C:\GeneT" -Force | Out-Null
 
-# ── 8. Criar tarefa agendada de atualização remota ────────────
+# ── 8. Criar tarefa agendada ──────────────────────────────────
 Write-Host "[8/9] A criar tarefa agendada..." -ForegroundColor Yellow
-$scriptBlock = @"
-`$url = [System.Environment]::GetEnvironmentVariable('GENET_UPDATE_URL', 'Machine')
+
+$scriptContent = @'
+$url = [System.Environment]::GetEnvironmentVariable('GENET_UPDATE_URL', 'Machine')
 try {
-    `$conteudo = (Invoke-WebRequest -Uri `$url -UseBasicParsing).Content
-    Invoke-Expression `$conteudo
-    "$(Get-Date) — OK" | Out-File "C:\GeneT\update.log" -Append
+    $conteudo = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
+    Invoke-Expression $conteudo
+    $log = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - OK'
+    $log | Out-File 'C:\GeneT\update.log' -Append
 } catch {
-    "$(Get-Date) — ERRO: `$_" | Out-File "C:\GeneT\update.log" -Append
+    $log = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO: ' + $_.Exception.Message
+    $log | Out-File 'C:\GeneT\update.log' -Append
 }
-"@
-$scriptBlock | Out-File "C:\GeneT\run_update.ps1" -Encoding UTF8
+'@
+
+$scriptContent | Out-File "C:\GeneT\run_update.ps1" -Encoding UTF8
 
 $action   = New-ScheduledTaskAction -Execute "PowerShell.exe" `
               -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File C:\GeneT\run_update.ps1"
@@ -108,17 +112,19 @@ $NumSerie = (Get-WmiObject Win32_BIOS).SerialNumber
 $Modelo   = (Get-WmiObject Win32_ComputerSystem).Model
 $MAC      = (Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1).MacAddress
 $DataConf = Get-Date -Format "dd/MM/yyyy"
-"$NomePc,$NumSerie,$Modelo,$MAC,$DataConf,,$chave,,,,,,,Configurado," |
-    Out-File "C:\GeneT\registo.csv" -Append -Encoding UTF8
+$linha = "$NomePc,$NumSerie,$Modelo,$MAC,$DataConf,,$chave,,,,,,,Configurado,"
+$linha | Out-File "C:\GeneT\registo.csv" -Append -Encoding UTF8
 
-Write-Host "`n========================================" -ForegroundColor Green
-Write-Host " ✅ Fase 1 concluída!" -ForegroundColor Green
-Write-Host " PC:          $NomePc" -ForegroundColor Green
-Write-Host " Nº Série:    $NumSerie" -ForegroundColor Green
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
+Write-Host " CONCLUIDO!" -ForegroundColor Green
+Write-Host " PC:       $NomePc" -ForegroundColor Green
+Write-Host " N Serie:  $NumSerie" -ForegroundColor Green
 Write-Host " Chave BitLocker:" -ForegroundColor Green
 Write-Host " $chave" -ForegroundColor Yellow
-Write-Host " ⚠️  Guarda esta chave no Excel agora!" -ForegroundColor Red
-Write-Host "========================================`n" -ForegroundColor Green
+Write-Host " GUARDA ESTA CHAVE NO EXCEL ANTES DE CONTINUAR!" -ForegroundColor Red
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
 
 Read-Host "Pressiona Enter para reiniciar o PC"
 Restart-Computer -Force
