@@ -4,12 +4,18 @@
 # Uso: .\setup_utilizador.ps1 -NomeUtilizador "joao.silva"
 # ============================================================
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$NomeUtilizador
+    [string]$NomeUtilizador = ""
 )
 
 # Deteta automaticamente o nome do PC
 $NomePc = $env:COMPUTERNAME
+
+# Validar parametro
+if (-not $NomeUtilizador) {
+    Write-Host "ERRO: Nome de utilizador nao fornecido." -ForegroundColor Red
+    Write-Host "Uso: .\setup_utilizador.ps1 -NomeUtilizador 'joao.silva'" -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
