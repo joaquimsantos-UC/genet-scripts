@@ -35,3 +35,8 @@ if (-not $instalado) {
     $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao ja instalado - a saltar'
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
+
+# ── Adiciona comandos abaixo desta linha ──────────────────────
+
+
+# ─────────────────────────────────────────────────────────────
