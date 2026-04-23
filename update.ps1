@@ -19,7 +19,7 @@ if (-not $instalado) {
     $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A instalar Cartao de Cidadao...'
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 
-    $url  = "https://www.autenticacao.gov.pt/documents/20126/0/Autenticacao.gov_Win_x64+signed.msi"
+    $url  = "https://aplicacoes.autenticacao.gov.pt/apps/Autenticacao.gov_Win_x64_signed.msi"
     $dest = "C:\GeneT\CartaoCidadao.msi"
     try {
         Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
