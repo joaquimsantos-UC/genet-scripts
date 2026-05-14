@@ -4,15 +4,8 @@
 # ============================================================
 
 # ── Configuracao do Google Form ────────────────────────────────
-$FormUrl               = "https://docs.google.com/forms/d/e/1FAIpQLScNeg6Ksdp3yGnVriBDtfbzM21o064n8cjLbPdVLSq48ePtSg/formResponse"
-$entry_Nome_PC         = "entry.1096512323"
-$entry_No_Serie        = "entry.1107045509"
-$entry_Modelo          = "entry.1619347434"
-$entry_MAC_Address     = "entry.1161066532"
-$entry_Utilizador      = "entry.432592008"
-$entry_ID_AnyDesk      = "entry.733110054"
-$entry_Chave_BitLocker = "entry.965104426"
-$entry_Data            = "entry.953842874"
+$FormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScNeg6Ksdp3yGnVriBDtfbzM21o064n8cjLbPdVLSq48ePtSg/formResponse"
+$Fbzx    = "-4604633300964041180"
 
 # ── Recolher informacao ────────────────────────────────────────
 $NomePc   = $env:COMPUTERNAME
@@ -61,37 +54,27 @@ Write-Host ""
 # ── Enviar para Google Forms ───────────────────────────────────
 Write-Host " A enviar registo..." -ForegroundColor Yellow
 
-$body = @{
-    $entry_Nome_PC         = $NomePc
-    $entry_No_Serie        = $NumSerie
-    $entry_Modelo          = $Modelo
-    $entry_MAC_Address     = $MAC
-    $entry_Utilizador      = $utilizador
-    $entry_ID_AnyDesk      = $anydeskId
-    $entry_Chave_BitLocker = $chave
-    $entry_Data            = $DataHoje
-}
+Add-Type -AssemblyName System.Web
+function Encode($s) { [System.Web.HttpUtility]::UrlEncode([string]$s) }
 
-# ── Enviar para Google Forms ───────────────────────────────────
-Write-Host " A enviar registo..." -ForegroundColor Yellow
+$postData = "entry.1096512323=$(Encode $NomePc)" +
+            "&entry.1107045509=$(Encode $NumSerie)" +
+            "&entry.1619347434=$(Encode $Modelo)" +
+            "&entry.1161066532=$(Encode $MAC)" +
+            "&entry.432592008=$(Encode $utilizador)" +
+            "&entry.733110054=$(Encode $anydeskId)" +
+            "&entry.965104426=$(Encode $chave)" +
+            "&entry.953842874=$(Encode $DataHoje)" +
+            "&fvv=1" +
+            "&fbzx=$Fbzx" +
+            "&pageHistory=0" +
+            "&partialResponse=%5Bnull%2Cnull%2C%22$Fbzx%22%5D" +
+            "&submissionTimestamp=-1"
 
-$curlArgs = @(
-    "-s", "-o", "NUL", "-w", "%{http_code}",
-    "--data-urlencode", "entry.1096512323=$NomePc",
-    "--data-urlencode", "entry.1107045509=$NumSerie",
-    "--data-urlencode", "entry.1619347434=$Modelo",
-    "--data-urlencode", "entry.1161066532=$MAC",
-    "--data-urlencode", "entry.432592008=$utilizador",
-    "--data-urlencode", "entry.733110054=$anydeskId",
-    "--data-urlencode", "entry.965104426=$chave",
-    "--data-urlencode", "entry.953842874=$DataHoje",
-    "-d", "fvv=1",
-    "-d", "fbzx=-4604633300964041180",
-    "-d", "pageHistory=0",
-    $FormUrl
-)
-
-$resultado = & curl.exe @curlArgs 2>$null
+$resultado = & curl.exe -s -o NUL -w "%{http_code}" `
+    -H "Content-Type: application/x-www-form-urlencoded" `
+    -d $postData `
+    $FormUrl 2>$null
 
 if ($resultado -match "^[23]") {
     Write-Host ""
