@@ -57,14 +57,14 @@ Write-Host " A enviar registo..." -ForegroundColor Yellow
 Add-Type -AssemblyName System.Web
 function Encode($s) { [System.Web.HttpUtility]::UrlEncode([string]$s) }
 
-$postData = "entry.1096512323=$(Encode $NomePc)" +
-            "&entry.1107045509=$(Encode $NumSerie)" +
-            "&entry.1619347434=$(Encode $Modelo)" +
-            "&entry.1161066532=$(Encode $MAC)" +
-            "&entry.432592008=$(Encode $utilizador)" +
-            "&entry.733110054=$(Encode $anydeskId)" +
-            "&entry.965104426=$(Encode $chave)" +
-            "&entry.953842874=$(Encode $DataHoje)" +
+$postData = "entry.1638171771=$(Encode $NomePc)" +
+            "&entry.1817047519=$(Encode $NumSerie)" +
+            "&entry.803403993=$(Encode $Modelo)" +
+            "&entry.1448243464=$(Encode $MAC)" +
+            "&entry.186649511=$(Encode $utilizador)" +
+            "&entry.553911116=$(Encode $anydeskId)" +
+            "&entry.1344745420=$(Encode $chave)" +
+            "&entry.256400065=$(Encode $DataHoje)" +
             "&fvv=1" +
             "&fbzx=$Fbzx" +
             "&pageHistory=0" +
