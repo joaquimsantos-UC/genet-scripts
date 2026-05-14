@@ -73,7 +73,9 @@ $body = @{
 }
 
 try {
-    Invoke-WebRequest -Uri $FormUrl -Method POST -Body $body -UseBasicParsing | Out-Null
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $FormUrl -Method POST -Body $body -UseBasicParsing `
+        -MaximumRedirection 0 -ErrorAction SilentlyContinue | Out-Null
     Write-Host ""
     Write-Host " Registo enviado com sucesso!" -ForegroundColor Green
     Write-Host " Ver em: https://docs.google.com/spreadsheets/d/17K9hNQGHgFMGAkdn62PEDGVfPC2DLQ4W5lryOF7bZDw" -ForegroundColor Cyan
