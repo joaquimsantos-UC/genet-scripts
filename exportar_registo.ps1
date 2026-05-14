@@ -75,17 +75,20 @@ $body = @{
 # ── Enviar para Google Forms ───────────────────────────────────
 Write-Host " A enviar registo..." -ForegroundColor Yellow
 
-$formData = "entry.1096512323={0}&entry.1107045509={1}&entry.1619347434={2}&entry.1161066532={3}&entry.432592008={4}&entry.733110054={5}&entry.965104426={6}&entry.953842874={7}" -f `
-    [Uri]::EscapeDataString($NomePc),
-    [Uri]::EscapeDataString($NumSerie),
-    [Uri]::EscapeDataString($Modelo),
-    [Uri]::EscapeDataString($MAC),
-    [Uri]::EscapeDataString($utilizador),
-    [Uri]::EscapeDataString($anydeskId),
-    [Uri]::EscapeDataString($chave),
-    [Uri]::EscapeDataString($DataHoje)
+$curlArgs = @(
+    "-s", "-o", "NUL", "-w", "%{http_code}",
+    "--data-urlencode", "entry.1096512323=$NomePc",
+    "--data-urlencode", "entry.1107045509=$NumSerie",
+    "--data-urlencode", "entry.1619347434=$Modelo",
+    "--data-urlencode", "entry.1161066532=$MAC",
+    "--data-urlencode", "entry.432592008=$utilizador",
+    "--data-urlencode", "entry.733110054=$anydeskId",
+    "--data-urlencode", "entry.965104426=$chave",
+    "--data-urlencode", "entry.953842874=$DataHoje",
+    $FormUrl
+)
 
-$resultado = & curl.exe -s -o NUL -w "%{http_code}" -X POST -d $formData $FormUrl 2>$null
+$resultado = & curl.exe @curlArgs 2>$null
 
 if ($resultado -match "^[23]") {
     Write-Host ""
