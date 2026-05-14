@@ -1,76 +1,62 @@
 # ============================================================
-# start.ps1 - GeneT Menu de Configuracao
-# Uso: irm bit.ly/genet-setup | iex
+# start.ps1  |  GeneT - Instalador de Scripts
+# Entrada: irm bit.ly/genet-lt-setup | iex
+# Descarrega todos os scripts do GitHub para C:\GeneT\scripts\
 # ============================================================
 
-$BaseURL = "https://raw.githubusercontent.com/joaquimsantos-UC/genet-scripts/refs/heads/main"
-
-function Download-And-Run {
-    param([string]$script, [string]$args)
-    $url = "$BaseURL/$script"
-    $dest = "C:\GeneT\$script"
-    New-Item -ItemType Directory -Path "C:\GeneT" -Force | Out-Null
-    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-    & powershell.exe -ExecutionPolicy Bypass -File $dest $args
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+        ).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+    Write-Host "ERRO: Executa este script como Administrador." -ForegroundColor Red
+    exit 1
 }
 
-do {
-    Clear-Host
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "   GeneT -- Menu de Configuracao" -ForegroundColor Cyan
-    Write-Host "   PC: $env:COMPUTERNAME" -ForegroundColor Cyan
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host " [1] Fase 1 -- Configuracao inicial" -ForegroundColor White
-    Write-Host " [2] Fase 2 -- Criar utilizador" -ForegroundColor White
-    Write-Host " [3] Atualizar todo o software" -ForegroundColor White
-    Write-Host " [4] Ver log de atualizacoes remotas" -ForegroundColor White
-    Write-Host " [0] Sair" -ForegroundColor Gray
-    Write-Host ""
-    $opcao = Read-Host "Escolhe uma opcao"
+$ZipUrl      = "https://github.com/joaquimsantos-UC/genet-scripts/archive/refs/heads/main.zip"
+$ZipTemp     = "$env:TEMP\genet-scripts.zip"
+$ScriptsPath = "C:\GeneT\scripts"
 
-    switch ($opcao) {
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host " GeneT - A descarregar scripts...       " -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
-        "1" {
-            $num = Read-Host "Numero do PC (ex: 1 para GeneT-LT-001)"
-            Download-And-Run "setup_inicial.ps1" "-Numero $num"
-        }
+# ── Descarregar ZIP ────────────────────────────────────────────
+Write-Host " A descarregar do GitHub..." -ForegroundColor Yellow
+try {
+    Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipTemp -UseBasicParsing
+} catch {
+    Write-Host " ERRO ao descarregar: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
-        "2" {
-            $user = Read-Host "Nome do utilizador (ex: joao.silva)"
-            Download-And-Run "setup_utilizador.ps1" "-NomeUtilizador $user"
-        }
+# ── Extrair ────────────────────────────────────────────────────
+Write-Host " A extrair ficheiros..." -ForegroundColor Yellow
+New-Item -ItemType Directory -Path "C:\GeneT" -Force | Out-Null
 
-        "3" {
-            Write-Host ""
-            Write-Host "A atualizar todo o software..." -ForegroundColor Yellow
-            winget upgrade --all --source winget --silent --accept-package-agreements
-            Write-Host "Concluido!" -ForegroundColor Green
-            Read-Host "Pressiona Enter para continuar"
-        }
+if (Test-Path $ScriptsPath) {
+    Remove-Item $ScriptsPath -Recurse -Force
+}
 
-        "4" {
-            if (Test-Path "C:\GeneT\update.log") {
-                Write-Host ""
-                Write-Host "--- Log de atualizacoes remotas ---" -ForegroundColor Cyan
-                Get-Content "C:\GeneT\update.log" | Select-Object -Last 20
-            } else {
-                Write-Host ""
-                Write-Host "Ainda nao ha registos de atualizacao." -ForegroundColor Yellow
-            }
-            Read-Host "Pressiona Enter para continuar"
-        }
+Expand-Archive -Path $ZipTemp -DestinationPath "C:\GeneT" -Force
 
-        "0" {
-            Write-Host ""
-            Write-Host "Saindo..." -ForegroundColor Gray
-        }
+# O GitHub extrai para uma pasta com o nome "genet-scripts-main"
+$subpasta = Get-ChildItem "C:\GeneT" -Directory |
+    Where-Object { $_.Name -like "genet-scripts-*" } |
+    Select-Object -First 1
 
-        default {
-            Write-Host ""
-            Write-Host "Opcao invalida." -ForegroundColor Red
-            Start-Sleep -Seconds 1
-        }
-    }
+if ($subpasta) {
+    Rename-Item $subpasta.FullName $ScriptsPath
+} else {
+    Write-Host " ERRO: nao foi possivel encontrar a pasta extraida." -ForegroundColor Red
+    exit 1
+}
 
-} while ($opcao -ne "0")
+# ── Limpeza ────────────────────────────────────────────────────
+Remove-Item $ZipTemp -Force
+
+# ── Resultado ──────────────────────────────────────────────────
+Write-Host ""
+Write-Host " Scripts prontos em: $ScriptsPath" -ForegroundColor Green
+Write-Host ""
+Write-Host " A abrir pasta..." -ForegroundColor Yellow
+Start-Process explorer.exe $ScriptsPath
