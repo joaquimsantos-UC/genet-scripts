@@ -85,6 +85,9 @@ $curlArgs = @(
     "--data-urlencode", "entry.733110054=$anydeskId",
     "--data-urlencode", "entry.965104426=$chave",
     "--data-urlencode", "entry.953842874=$DataHoje",
+    "-d", "fvv=1",
+    "-d", "fbzx=-4604633300964041180",
+    "-d", "pageHistory=0",
     $FormUrl
 )
 
