@@ -72,16 +72,28 @@ $body = @{
     $entry_Data            = $DataHoje
 }
 
-try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $FormUrl -Method POST -Body $body -UseBasicParsing `
-        -MaximumRedirection 0 -ErrorAction SilentlyContinue | Out-Null
+# ── Enviar para Google Forms ───────────────────────────────────
+Write-Host " A enviar registo..." -ForegroundColor Yellow
+
+$formData = "entry.1096512323={0}&entry.1107045509={1}&entry.1619347434={2}&entry.1161066532={3}&entry.432592008={4}&entry.733110054={5}&entry.965104426={6}&entry.953842874={7}" -f `
+    [Uri]::EscapeDataString($NomePc),
+    [Uri]::EscapeDataString($NumSerie),
+    [Uri]::EscapeDataString($Modelo),
+    [Uri]::EscapeDataString($MAC),
+    [Uri]::EscapeDataString($utilizador),
+    [Uri]::EscapeDataString($anydeskId),
+    [Uri]::EscapeDataString($chave),
+    [Uri]::EscapeDataString($DataHoje)
+
+$resultado = & curl.exe -s -o NUL -w "%{http_code}" -X POST -d $formData $FormUrl 2>$null
+
+if ($resultado -match "^[23]") {
     Write-Host ""
     Write-Host " Registo enviado com sucesso!" -ForegroundColor Green
     Write-Host " Ver em: https://docs.google.com/spreadsheets/d/17K9hNQGHgFMGAkdn62PEDGVfPC2DLQ4W5lryOF7bZDw" -ForegroundColor Cyan
     Write-Host ""
-} catch {
+} else {
     Write-Host ""
-    Write-Host " ERRO ao enviar: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host " ERRO ao enviar (HTTP $resultado)" -ForegroundColor Red
     Write-Host ""
 }
