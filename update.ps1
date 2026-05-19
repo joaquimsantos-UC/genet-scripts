@@ -36,6 +36,21 @@ if (-not $instalado) {
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
 
+# ── Adobe Acrobat Reader ──────────────────────────────────────
+$instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+    Where-Object { $_.DisplayName -like "*Adobe Acrobat*" }
+
+if (-not $instalado) {
+    $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A instalar Adobe Acrobat Reader...'
+    $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+    winget install Adobe.Acrobat.Reader.64-bit --source winget --silent --accept-package-agreements --accept-source-agreements 2>$null
+    $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Adobe Acrobat Reader instalado'
+    $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+} else {
+    $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Adobe Acrobat Reader ja instalado - a saltar'
+    $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+}
+
 # ── Adiciona comandos abaixo desta linha ──────────────────────
 
 
