@@ -39,30 +39,29 @@ if ($task -and $task.Principal.LogonType -ne "ServiceAccount") {
 }
 
 # ── Cartao de Cidadao ─────────────────────────────────────────
-$instalado = Get-WmiObject -Class Win32_Product |
-    Where-Object { $_.Name -like "*Autenticacao.gov*" -or $_.Name -like "*Cartao de Cidadao*" }
+$instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
+    Where-Object { $_.DisplayName -like "*Autenticacao.gov*" -or $_.DisplayName -like "*Cartao de Cidadao*" }
 
 if (-not $instalado) {
     $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A instalar Cartao de Cidadao...'
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
-
     $url  = "https://aplicacoes.autenticacao.gov.pt/apps/Autenticacao.gov_Win_x64_signed.msi"
-$dest = "C:\Windows\Temp\CartaoCidadao.msi"
-try {
-    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-    Start-Process msiexec.exe -ArgumentList "/i `"$dest`" /qn /norestart ACCEPTLICENSE=YES" -Wait
-    Start-Sleep -Seconds 30
-    Remove-Item $dest -Force -ErrorAction SilentlyContinue
-        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao instalado com sucesso'
+    $dest = "C:\Windows\Temp\CartaoCidadao.msi"
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+        $p = Start-Process msiexec.exe -ArgumentList "/i `"$dest`" /qn /norestart ACCEPTLICENSE=YES" -Wait -PassThru
+        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Exit code: ' + $p.ExitCode
         $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+        Remove-Item $dest -Force -ErrorAction SilentlyContinue
     } catch {
-        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO ao instalar Cartao de Cidadao: ' + $_.Exception.Message
+        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO: ' + $_.Exception.Message
         $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
     }
 } else {
     $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao ja instalado - a saltar'
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
+
 
 # ── Adobe Acrobat Reader ──────────────────────────────────────
 $instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
