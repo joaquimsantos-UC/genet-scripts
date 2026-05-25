@@ -116,14 +116,15 @@ try {
 '@
 $scriptContent | Out-File "C:\GeneT\run_update.ps1" -Encoding UTF8
 
-$action   = New-ScheduledTaskAction -Execute "PowerShell.exe" `
-              -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File C:\GeneT\run_update.ps1"
-$trigger1 = New-ScheduledTaskTrigger -AtStartup
-$trigger2 = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Hours 4) -Once -At (Get-Date)
-$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+$action    = New-ScheduledTaskAction -Execute "PowerShell.exe" `
+               -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File C:\GeneT\run_update.ps1"
+$trigger1  = New-ScheduledTaskTrigger -AtStartup
+$trigger2  = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Hours 4) -Once -At (Get-Date)
+$settings  = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -RunOnlyIfNetworkAvailable $true
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
 Register-ScheduledTask -TaskName "GeneT-Update" `
-    -Action $action -Trigger @($trigger1, $trigger2) -Settings $settings `
-    -RunLevel Highest -Force | Out-Null
+    -Action $action -Trigger @($trigger1, $trigger2) -Settings $settings -Principal $principal `
+    -Force | Out-Null
 
 # ── 9. Resumo ──────────────────────────────────────────────────
 Write-Host "[9/9] A recolher informacao final..." -ForegroundColor Yellow
