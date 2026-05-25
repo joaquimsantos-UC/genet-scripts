@@ -51,6 +51,7 @@ if (-not $instalado) {
     try {
         Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
         Start-Process msiexec.exe -ArgumentList "/i `"$dest`" /qn /norestart ACCEPTLICENSE=YES" -Wait
+        Start-Sleep -Seconds 30
         Remove-Item $dest -Force -ErrorAction SilentlyContinue
         $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao instalado com sucesso'
         $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
