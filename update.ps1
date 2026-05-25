@@ -62,7 +62,6 @@ if (-not $instalado) {
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
 
-
 # ── Adobe Acrobat Reader ──────────────────────────────────────
 $instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
     Where-Object { $_.DisplayName -like "*Adobe Acrobat*" }
