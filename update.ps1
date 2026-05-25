@@ -47,12 +47,12 @@ if (-not $instalado) {
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 
     $url  = "https://aplicacoes.autenticacao.gov.pt/apps/Autenticacao.gov_Win_x64_signed.msi"
-    $dest = "C:\GeneT\CartaoCidadao.msi"
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-        Start-Process msiexec.exe -ArgumentList "/i `"$dest`" /qn /norestart ACCEPTLICENSE=YES" -Wait
-        Start-Sleep -Seconds 30
-        Remove-Item $dest -Force -ErrorAction SilentlyContinue
+$dest = "C:\Windows\Temp\CartaoCidadao.msi"
+try {
+    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+    Start-Process msiexec.exe -ArgumentList "/i `"$dest`" /qn /norestart ACCEPTLICENSE=YES" -Wait
+    Start-Sleep -Seconds 30
+    Remove-Item $dest -Force -ErrorAction SilentlyContinue
         $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao instalado com sucesso'
         $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
     } catch {
