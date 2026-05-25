@@ -11,6 +11,22 @@
 $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - update.ps1 executado'
 $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 
+# ── Corrigir run_update.ps1 (encoding) ───────────────────────
+$runUpdate = @'
+$url = [System.Environment]::GetEnvironmentVariable('GENET_UPDATE_URL', 'Machine')
+try {
+    $conteudo = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
+    Invoke-Expression $conteudo
+    ((Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - OK') | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+} catch {
+    ((Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO: ' + $_.Exception.Message) | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+}
+'@
+$atual = Get-Content "C:\GeneT\run_update.ps1" -Raw -ErrorAction SilentlyContinue
+if ($atual -notlike "*Encoding UTF8*") {
+    $runUpdate | Out-File "C:\GeneT\run_update.ps1" -Encoding UTF8 -Force
+}
+
 # ── Corrigir tarefa agendada (executar como SYSTEM) ───────────
 $task = Get-ScheduledTask -TaskName "GeneT-Update" -ErrorAction SilentlyContinue
 if ($task -and $task.Principal.LogonType -ne "ServiceAccount") {
