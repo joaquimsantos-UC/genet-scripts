@@ -43,17 +43,12 @@ $instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\U
     Where-Object { $_.DisplayName -like "*Autenticacao.gov*" -or $_.DisplayName -like "*Cartao de Cidadao*" }
 
 if (-not $instalado) {
-    $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A instalar Cartao de Cidadao...'
+    $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A apresentar instalador Cartao de Cidadao...'
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
-    $resultado = & winget install "Autenticacao.gov" --source winget --silent --accept-package-agreements --accept-source-agreements 2>&1
-    $instaladoAgora = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
-        Where-Object { $_.DisplayName -like "*Autenticacao.gov*" -or $_.DisplayName -like "*Cartao de Cidadao*" }
-    if ($instaladoAgora) {
-        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao instalado com sucesso'
-    } else {
-        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO ao instalar Cartao de Cidadao'
-    }
-    $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+    $url  = "https://aplicacoes.autenticacao.gov.pt/apps/Autenticacao.gov_Win_x64_signed.msi"
+    $dest = "C:\Windows\Temp\CartaoCidadao.msi"
+    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+    Start-Process $dest
 } else {
     $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Cartao de Cidadao ja instalado - a saltar'
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
