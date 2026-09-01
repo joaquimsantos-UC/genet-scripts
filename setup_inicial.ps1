@@ -120,7 +120,7 @@ $action    = New-ScheduledTaskAction -Execute "PowerShell.exe" `
                -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File C:\GeneT\run_update.ps1"
 $trigger1  = New-ScheduledTaskTrigger -AtStartup
 $trigger2  = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Hours 4) -Once -At (Get-Date)
-$settings  = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -RunOnlyIfNetworkAvailable $true
+$settings  = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -RunOnlyIfNetworkAvailable
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
 Register-ScheduledTask -TaskName "GeneT-Update" `
     -Action $action -Trigger @($trigger1, $trigger2) -Settings $settings -Principal $principal `
