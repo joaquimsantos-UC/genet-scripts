@@ -52,6 +52,9 @@ try {
     Write-Host "  AVISO: Nao foi possivel forcar mudanca de password" -ForegroundColor Yellow
 }
 
+Set-LocalUser -Name $NomeUtilizador -PasswordNeverExpires $true
+
+
 # ── 2. ID AnyDesk ──────────────────────────────────────────────
 Write-Host "[2/3] A obter ID AnyDesk..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
