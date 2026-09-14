@@ -69,6 +69,13 @@ if (-not $instalado) {
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
 
+# ── Desativar expiração de password ──────────────────────────
+Get-LocalUser | Where-Object { $_.Enabled -eq $true -and $_.Name -notin @("Administrator","Administrador","DefaultAccount","Guest","WDAGUtilityAccount") } | ForEach-Object {
+    Set-LocalUser -Name $_.Name -PasswordNeverExpires $true
+    $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - Password nunca expira: ' + $_.Name
+    $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+}
+
 # ── Adiciona comandos abaixo desta linha ──────────────────────
 
 
