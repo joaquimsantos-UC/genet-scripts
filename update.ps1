@@ -76,6 +76,33 @@ Get-LocalUser | Where-Object { $_.Enabled -eq $true -and $_.Name -notin @("Admin
     $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
 
+# ── GraphPad Prism (PCs específicos) ─────────────────────────
+$pcsGraphPad = @("GENET-LT-001","GENET-LT-006","GENET-LT-007","GENET-LT-008","GENET-LT-009","GENET-LT-010","GENET-LT-014","GENET-LT-015","GENET-LT-016","GENET-LT-017")
+
+if ($pcsGraphPad -contains $env:COMPUTERNAME) {
+    $instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName -like "*GraphPad Prism*" }
+
+    if (-not $instalado) {
+        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A instalar GraphPad Prism...'
+        $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+        $dest = "C:\Windows\Temp\InstallPrism11.msi"
+        try {
+            Invoke-WebRequest -Uri "https://cdn.graphpad.com/downloads/prism/11/InstallPrism11.msi" -OutFile $dest -UseBasicParsing
+            $p = Start-Process msiexec.exe -ArgumentList "/i `"$dest`" /qn /norestart" -Wait -PassThru
+            $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - GraphPad Prism - Exit code: ' + $p.ExitCode
+            $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+            Remove-Item $dest -Force -ErrorAction SilentlyContinue
+        } catch {
+            $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO GraphPad Prism: ' + $_.Exception.Message
+            $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+        }
+    } else {
+        $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - GraphPad Prism ja instalado - a saltar'
+        $logMsg | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
+    }
+}
+
 # ── Adiciona comandos abaixo desta linha ──────────────────────
 
 
