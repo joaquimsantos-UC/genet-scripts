@@ -40,7 +40,7 @@ if ($task -and $task.Principal.LogonType -ne "ServiceAccount") {
 
 # ── Cartao de Cidadao ─────────────────────────────────────────
 $instalado = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
-    Where-Object { $_.DisplayName -like "*Autenticacao.gov*" -or $_.DisplayName -like "*Cartao de Cidadao*" }
+    Where-Object { $_.DisplayName -like "*Autentica*Gov*" -or $_.DisplayName -like "*Cart* de Cidad*" }
 
 if (-not $instalado) {
     $logMsg = (Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - A apresentar instalador Cartao de Cidadao...'
