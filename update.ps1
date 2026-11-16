@@ -220,7 +220,13 @@ function Update-RepoFile([string]$name, [string]$dest, [scriptblock]$validate) {
         Write-Log ('invalid file from repository, kept previous copy: ' + $name)
         return $false
     }
-    Copy-Item -LiteralPath $tmp -Destination $dest -Force
+    if ($name -like '*.ps1') {
+        # always store scripts as UTF-8 with BOM (PowerShell 5.1 reads BOM-less files as ANSI -> garbled accents)
+        $txt = [System.IO.File]::ReadAllText($tmp, [System.Text.Encoding]::UTF8)
+        [System.IO.File]::WriteAllText($dest, $txt, (New-Object System.Text.UTF8Encoding($true)))
+    } else {
+        Copy-Item -LiteralPath $tmp -Destination $dest -Force
+    }
     Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
     return $true
 }
