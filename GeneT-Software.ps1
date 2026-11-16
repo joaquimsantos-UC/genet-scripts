@@ -75,14 +75,14 @@ $form.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 
 $lblInfo = New-Object System.Windows.Forms.Label
 $lblInfo.Location = New-Object System.Drawing.Point(12, 10)
-$lblInfo.Size = New-Object System.Drawing.Size(736, 44)
+$lblInfo.Size = New-Object System.Drawing.Size(736, 58)
 $lblInfo.Anchor = 'Top, Left, Right'
 $lblInfo.Text = "Escolhe os programas que queres ter neste computador e carrega em Guardar. A instalação (ou remoção) é feita automaticamente em segundo plano, no máximo em cerca de 4 horas, com o computador ligado e com acesso à Internet. Os programas que exigem licença têm de ser ativados por ti depois de instalados."
 $form.Controls.Add($lblInfo)
 
 $lv = New-Object System.Windows.Forms.ListView
-$lv.Location = New-Object System.Drawing.Point(12, 60)
-$lv.Size = New-Object System.Drawing.Size(736, 346)
+$lv.Location = New-Object System.Drawing.Point(12, 74)
+$lv.Size = New-Object System.Drawing.Size(736, 334)
 $lv.Anchor = 'Top, Bottom, Left, Right'
 $lv.View = 'Details'
 $lv.CheckBoxes = $true
