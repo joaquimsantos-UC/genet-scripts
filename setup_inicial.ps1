@@ -50,12 +50,7 @@ foreach ($app in $apps) {
     winget install $app --source winget --silent --accept-package-agreements --accept-source-agreements 2>$null
 }
 
-Write-Host "  -> A instalar Cartao de Cidadao..." -ForegroundColor Gray
-winget install "Cartao de Cidadao" --source winget --silent --accept-package-agreements --accept-source-agreements 2>$null
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  AVISO: Cartao de Cidadao nao encontrado no winget." -ForegroundColor Yellow
-    Write-Host "  Instalar manualmente em: autenticacao.gov.pt" -ForegroundColor Yellow
-}
+Write-Host "  -> Cartao de Cidadao e restante software: instalados pela sincronizacao automatica (software.json)." -ForegroundColor Gray
 
 # ── 4. Atualizacoes ────────────────────────────────────────────
 Write-Host "[4/9] A atualizar Windows e software..." -ForegroundColor Yellow
@@ -101,6 +96,11 @@ if (-not $chave) { $chave = "PENDENTE - verificar manualmente" }
 Write-Host "[7/9] A configurar atualizacao remota..." -ForegroundColor Yellow
 [System.Environment]::SetEnvironmentVariable("GENET_UPDATE_URL", $UpdateURL, "Machine")
 New-Item -ItemType Directory -Path "C:\GeneT" -Force | Out-Null
+New-Item -ItemType Directory -Path "C:\GeneT\user" -Force | Out-Null
+New-Item -ItemType Directory -Path "C:\GeneT\cache" -Force | Out-Null
+# Standard users must not be able to change what SYSTEM runs: read-only, except C:\GeneT\user
+& icacls.exe "C:\GeneT"      /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
+& icacls.exe "C:\GeneT\user" /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)M'  | Out-Null
 
 # ── 8. Tarefa agendada ─────────────────────────────────────────
 Write-Host "[8/9] A criar tarefa agendada..." -ForegroundColor Yellow
@@ -109,9 +109,9 @@ $url = [System.Environment]::GetEnvironmentVariable('GENET_UPDATE_URL', 'Machine
 try {
     $conteudo = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
     Invoke-Expression $conteudo
-    ((Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - OK') | Out-File 'C:\GeneT\update.log' -Append
+    ((Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - OK') | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 } catch {
-    ((Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO: ' + $_.Exception.Message) | Out-File 'C:\GeneT\update.log' -Append
+    ((Get-Date -Format 'dd/MM/yyyy HH:mm') + ' - ERRO: ' + $_.Exception.Message) | Out-File 'C:\GeneT\update.log' -Append -Encoding UTF8
 }
 '@
 $scriptContent | Out-File "C:\GeneT\run_update.ps1" -Encoding UTF8
@@ -120,7 +120,9 @@ $action    = New-ScheduledTaskAction -Execute "PowerShell.exe" `
                -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File C:\GeneT\run_update.ps1"
 $trigger1  = New-ScheduledTaskTrigger -AtStartup
 $trigger2  = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Hours 4) -Once -At (Get-Date)
-$settings  = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -RunOnlyIfNetworkAvailable
+$settings  = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) `
+               -RunOnlyIfNetworkAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+               -StartWhenAvailable -MultipleInstances IgnoreNew
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
 Register-ScheduledTask -TaskName "GeneT-Update" `
     -Action $action -Trigger @($trigger1, $trigger2) -Settings $settings -Principal $principal `
